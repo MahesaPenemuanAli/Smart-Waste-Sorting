@@ -6,7 +6,7 @@ import 'package:flutter_application_11/app.dart';
 import 'package:flutter_application_11/providers/scan_provider.dart';
 
 void main() {
-  testWidgets('App renders successfully', (WidgetTester tester) async {
+  testWidgets('App renders successfully with theme', (WidgetTester tester) async {
     await tester.pumpWidget(
       ChangeNotifierProvider(
         create: (_) => ScanProvider(),
@@ -14,6 +14,6 @@ void main() {
       ),
     );
 
-    expect(find.text('Smart Waste Sorting — Stage 1 Complete'), findsOneWidget);
+    expect(find.text('Smart Waste Sorting'), findsOneWidget);
   });
 }

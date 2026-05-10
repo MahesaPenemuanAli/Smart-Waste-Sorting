@@ -1,0 +1,58 @@
+name: flutter_application_11
+description: "Smart Waste Sorting - Sistem Klasifikasi Cerdas Jenis Sampah Berbasis Computer Vision"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Icons
+  cupertino_icons: ^1.0.8
+
+  # AI — Gemini SDK
+  google_generative_ai: ^0.4.6
+
+  # Image input — kamera & galeri
+  image_picker: ^1.1.2
+
+  # State management
+  provider: ^6.1.2
+
+  # Local database
+  sqflite: ^2.4.1
+  path_provider: ^2.1.5
+  path: ^1.9.1
+
+  # UI — Typography
+  google_fonts: ^6.2.1
+
+  # UI — Animations
+  lottie: ^3.3.1
+
+  # UI — Charts for statistics
+  fl_chart: ^0.70.2
+
+  # UI — Loading skeleton
+  shimmer: ^3.0.0
+
+  # Utilities — Date formatting
+  intl: ^0.19.0
+
+  # Shared preferences — onboarding check
+  shared_preferences: ^2.3.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/lottie/
+    - assets/images/

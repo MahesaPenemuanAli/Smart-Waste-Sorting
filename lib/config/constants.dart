@@ -2,6 +2,8 @@
 /// API key, system prompt Gemini, data kategori sampah, dan string UI.
 library;
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 /// Konfigurasi utama aplikasi.
 class AppConstants {
   AppConstants._(); // Prevent instantiation
@@ -10,11 +12,13 @@ class AppConstants {
   // API Configuration
   // ─────────────────────────────────────────────
 
-  /// API Key Google Gemini — GANTI DENGAN KEY ANDA.
-  static const String geminiApiKey = 'YOUR_API_KEY_HERE';
+  /// API Key Google Gemini — diambil dari file .env untuk keamanan.
+  static String get geminiApiKey =>
+      dotenv.env['GEMINI_API_KEY'] ?? 'YOUR_API_KEY_HERE';
 
   /// Model Gemini yang digunakan.
-  static const String geminiModel = 'gemini-1.5-flash';
+  static String get geminiModel =>
+      dotenv.env['GEMINI_MODEL'] ?? 'gemini-2.5-flash';
 
   // ─────────────────────────────────────────────
   // System Instruction — Prompt untuk Gemini AI

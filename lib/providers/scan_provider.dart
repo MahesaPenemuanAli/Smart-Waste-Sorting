@@ -84,22 +84,29 @@ class ScanProvider extends ChangeNotifier {
   // Initialization
   // ─────────────────────────────────────────────
 
-  /// Inisialisasi provider — load kategori dan Gemini service.
+  /// Inisialisasi provider — load kategori dan statistik.
+  /// Gemini akan auto-initialize saat pertama kali scan.
   Future<void> initialize({String? apiKey}) async {
     try {
-      // Inisialisasi Gemini
-      _geminiService.initialize(apiKey: apiKey);
-      _isInitialized = true;
+      // Coba inisialisasi Gemini (jika API key valid)
+      try {
+        _geminiService.initialize(apiKey: apiKey);
+      } catch (e) {
+        // API key belum valid — tidak apa-apa, akan retry saat scan
+        debugPrint('Gemini init skipped: $e');
+      }
 
-      // Load kategori dari database
+      // Load kategori dari database (ini harus selalu berhasil)
       _categories = await _dbService.getAllCategories();
 
       // Load statistik awal
       await refreshStats();
 
+      _isInitialized = true;
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
+      _isInitialized = true; // Tetap tandai initialized agar tidak loop
       notifyListeners();
     }
   }

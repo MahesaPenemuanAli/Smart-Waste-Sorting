@@ -1,5 +1,5 @@
 /// Smart Waste Sorting — Gemini AI Service
-/// Komunikasi dengan Google Gemini 1.5 Flash untuk klasifikasi sampah.
+/// Komunikasi dengan Google Gemini untuk klasifikasi sampah.
 /// Mengirim gambar ke Gemini Vision dan menerima response JSON terstruktur.
 library;
 
@@ -21,13 +21,20 @@ class GeminiService {
   factory GeminiService() => _instance;
   GeminiService._internal();
 
+  /// Apakah model sudah diinisialisasi.
+  bool get isInitialized => _model != null;
+
   /// Inisialisasi model Gemini dengan API key dan system instruction.
+  /// Safe to call multiple times — hanya init sekali.
   void initialize({String? apiKey}) {
     final key = apiKey ?? AppConstants.geminiApiKey;
 
     if (key == 'YOUR_API_KEY_HERE' || key.isEmpty) {
-      throw Exception(AppConstants.errorApiKey);
+      throw GeminiServiceException(AppConstants.errorApiKey);
     }
+
+    // Jika sudah diinisialisasi, skip
+    if (_model != null) return;
 
     _model = GenerativeModel(
       model: AppConstants.geminiModel,
@@ -43,17 +50,21 @@ class GeminiService {
     );
   }
 
+  /// Pastikan model sudah diinisialisasi sebelum digunakan.
+  /// Auto-initialize jika belum, menggunakan API key dari .env.
+  void _ensureInitialized() {
+    if (_model == null) {
+      initialize(); // Akan throw jika API key tidak valid
+    }
+  }
+
   /// Mengklasifikasi sampah dari file gambar.
   ///
   /// [imageFile] — File gambar yang akan diklasifikasi.
   /// Returns [GeminiClassificationResult] berisi parsed JSON dan raw response.
   /// Throws [GeminiServiceException] jika terjadi error.
   Future<GeminiClassificationResult> classifyWaste(File imageFile) async {
-    if (_model == null) {
-      throw GeminiServiceException(
-        'Gemini model belum diinisialisasi. Panggil initialize() terlebih dahulu.',
-      );
-    }
+    _ensureInitialized();
 
     try {
       // Baca file gambar sebagai bytes
@@ -156,6 +167,11 @@ class GeminiService {
       default:
         return 'image/jpeg'; // Default
     }
+  }
+
+  /// Reset model — untuk reinisialisasi dengan key baru.
+  void reset() {
+    _model = null;
   }
 }
 

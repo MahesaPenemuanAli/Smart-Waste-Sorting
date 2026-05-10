@@ -12,6 +12,7 @@ import '../providers/scan_provider.dart';
 import 'scan_screen.dart';
 import 'history_screen.dart';
 import 'statistics_screen.dart';
+import 'profile_screen.dart';
 
 /// Home screen — dashboard utama aplikasi.
 class HomeScreen extends StatefulWidget {
@@ -46,6 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _HomeContent(onScanTap: _navigateToScan),
           const HistoryScreen(),
           const StatisticsScreen(),
+          const ProfileScreen(),
         ],
       ),
       bottomNavigationBar: _buildBottomNav(),
@@ -121,10 +123,9 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               _buildNavItem(0, Icons.home_rounded, AppConstants.navHome),
               _buildNavItem(1, Icons.history_rounded, AppConstants.navHistory),
-              const SizedBox(width: 56), // Space for FAB
+              const SizedBox(width: 48), // Space for FAB
               _buildNavItem(2, Icons.bar_chart_rounded, AppConstants.navStats),
-              // Placeholder for symmetry
-              const SizedBox(width: 56),
+              _buildNavItem(3, Icons.person_rounded, 'Profil'),
             ],
           ),
         ),

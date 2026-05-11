@@ -13,7 +13,7 @@ import 'package:provider/provider.dart';
 
 import '../config/theme.dart';
 import '../providers/scan_provider.dart';
-import 'result_screen.dart';
+import 'multi_result_screen.dart';
 
 enum _ScreenState { initializing, preview, captured, analyzing }
 enum _DragMode { none, move, topLeft, topRight, bottomLeft, bottomRight }
@@ -36,6 +36,7 @@ class _LiveScanScreenState extends State<LiveScanScreen>
   // Multi-box selection
   final List<Rect> _boxes = [];
   int _activeIdx = 0;
+  int _analyzingBoxIdx = -1; // which box is being analyzed now
   final GlobalKey _imageKey = GlobalKey();
   Size _containerSize = Size.zero;
 
@@ -148,21 +149,54 @@ class _LiveScanScreenState extends State<LiveScanScreen>
     setState(() { _capturedFile = null; _decodedImage = null; _boxes.clear(); _state = _ScreenState.preview; });
   }
 
-  // ── Crop & Analyze ──────────────────────────
+  // ── Crop & Analyze ALL Boxes ────────────────
 
-  Future<void> _analyzeActiveBox() async {
+  Future<void> _analyzeAllBoxes() async {
     if (_capturedFile == null || _decodedImage == null || _boxes.isEmpty) return;
-    setState(() => _state = _ScreenState.analyzing);
+    setState(() { _state = _ScreenState.analyzing; _analyzingBoxIdx = 0; });
+
+    final provider = context.read<ScanProvider>();
+    final List<BoxResult> results = [];
+
     try {
-      final cropped = await _cropRect(_boxes[_activeIdx]);
+      for (int i = 0; i < _boxes.length; i++) {
+        if (!mounted) return;
+        setState(() => _analyzingBoxIdx = i);
+
+        // 1. Crop this box
+        final cropped = await _cropRect(_boxes[i]);
+
+        // 2. Classify (no DB save yet)
+        final classifyResult = await provider.classifyImageOnly(cropped);
+        if (classifyResult == null) continue;
+
+        final parsedData = classifyResult['parsedData'] as Map<String, dynamic>;
+        final rawResponse = classifyResult['rawResponse'] as String? ?? '';
+
+        // 3. Save to DB
+        await provider.saveLiveClassification(
+          parsedData: parsedData,
+          rawResponse: rawResponse,
+          imageFile: cropped,
+        );
+
+        // 4. Add to results list
+        results.add(BoxResult(
+          boxIndex: i,
+          parsedData: parsedData,
+          croppedImage: cropped,
+          saved: true,
+        ));
+      }
+
       if (!mounted) return;
-      final provider = context.read<ScanProvider>();
-      await provider.scanFromFile(cropped);
-      if (!mounted) return;
-      if (provider.status == ScanStatus.success && provider.currentResult != null) {
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const ResultScreen()));
+
+      if (results.isNotEmpty) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => MultiResultScreen(results: results)),
+        );
       } else {
-        setState(() { _state = _ScreenState.captured; _errorMsg = provider.errorMessage ?? 'Gagal menganalisis.'; });
+        setState(() { _state = _ScreenState.captured; _errorMsg = 'Tidak ada objek yang berhasil dianalisis.'; });
       }
     } catch (e) {
       if (!mounted) return;
@@ -335,7 +369,7 @@ class _LiveScanScreenState extends State<LiveScanScreen>
           backgroundColor: AppTheme.textTertiary.withValues(alpha: 0.15),
         )),
         const SizedBox(height: 20),
-        Text('Menganalisis Kotak ${_activeIdx + 1}...', style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+        Text('Menganalisis Kotak ${_analyzingBoxIdx + 1} dari ${_boxes.length}...', style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         Text('AI sedang mengidentifikasi jenis sampah', style: TextStyle(color: AppTheme.textTertiary, fontSize: 13)),
       ]),
@@ -425,9 +459,9 @@ class _LiveScanScreenState extends State<LiveScanScreen>
       // Analyze
       Expanded(
         child: ElevatedButton.icon(
-          onPressed: _analyzeActiveBox,
+          onPressed: _analyzeAllBoxes,
           icon: const Icon(Icons.auto_awesome, size: 18),
-          label: Text('Analisis Kotak ${_activeIdx + 1}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+          label: Text(_boxes.length == 1 ? 'Analisis' : 'Analisis Semua (${_boxes.length})', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
           style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryGreen, foregroundColor: AppTheme.scaffoldDark, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
         ),
       ),

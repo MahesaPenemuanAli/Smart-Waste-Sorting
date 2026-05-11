@@ -195,6 +195,46 @@ class ScanProvider extends ChangeNotifier {
     await _performScan(imageFile);
   }
 
+  /// Classify image only — untuk live preview (TIDAK simpan ke DB).
+  Future<Map<String, dynamic>?> classifyImageOnly(File imageFile) async {
+    try {
+      final result = await _geminiService.classifyWaste(imageFile);
+      return {
+        'parsedData': result.parsedData,
+        'rawResponse': result.rawResponse,
+      };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Simpan hasil live classification ke database.
+  Future<bool> saveLiveClassification({
+    required Map<String, dynamic> parsedData,
+    required String rawResponse,
+    required File imageFile,
+  }) async {
+    try {
+      final categoryName = (parsedData['category'] as String?) ?? '';
+      final category = await _dbService.getCategoryByName(categoryName);
+      if (category == null) return false;
+
+      final savedPath = await _saveImageToAppDir(imageFile);
+      final scanResult = ScanResult.fromAiResponse(
+        jsonMap: parsedData,
+        imagePath: savedPath,
+        categoryId: category.id!,
+        rawResponse: rawResponse,
+      );
+      await _dbService.insertScanResult(scanResult);
+      await refreshStats();
+      await loadHistory();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Internal — proses scan gambar.
   Future<void> _performScan(File imageFile) async {
     try {

@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import '../config/constants.dart';
 import '../config/theme.dart';
 import '../providers/scan_provider.dart';
+import 'live_scan_screen.dart';
 import 'result_screen.dart';
 
 /// Scan screen — upload/foto gambar sampah untuk klasifikasi AI.
@@ -56,6 +57,13 @@ class _ScanScreenState extends State<ScanScreen>
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _buildSourceSheet(ctx),
+    );
+  }
+
+  /// Open live camera (Google Lens style)
+  void _openLiveScan() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const LiveScanScreen()),
     );
   }
 
@@ -307,13 +315,34 @@ class _ScanScreenState extends State<ScanScreen>
       children: [
         // Source picker buttons
         if (!hasImage) ...[
+          // Live Camera button (Google Lens)
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton.icon(
+              onPressed: _openLiveScan,
+              icon: const Icon(Icons.center_focus_strong_rounded, size: 22),
+              label: const Text(
+                'Kamera Live',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryGreen,
+                foregroundColor: AppTheme.scaffoldDark,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingMd),
           Row(
             children: [
               Expanded(
                 child: _SourceButton(
                   icon: Icons.camera_alt_rounded,
                   label: AppConstants.scanFromCamera,
-                  color: AppTheme.primaryGreen,
+                  color: AppTheme.accentBlue,
                   onTap: () async {
                     await provider.pickImageFromCamera();
                   },
@@ -324,7 +353,7 @@ class _ScanScreenState extends State<ScanScreen>
                 child: _SourceButton(
                   icon: Icons.photo_library_rounded,
                   label: AppConstants.scanFromGallery,
-                  color: AppTheme.accentBlue,
+                  color: AppTheme.accentPurple,
                   onTap: () async {
                     await provider.pickImageFromGallery();
                   },
@@ -484,13 +513,37 @@ class _ScanScreenState extends State<ScanScreen>
             style: Theme.of(ctx).textTheme.headlineSmall,
           ),
           const SizedBox(height: AppTheme.spacingLg),
+          // Live Camera option
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _openLiveScan();
+              },
+              icon: const Icon(Icons.center_focus_strong_rounded, size: 20),
+              label: const Text(
+                'Kamera Live (Pilih Objek)',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryGreen,
+                foregroundColor: AppTheme.scaffoldDark,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingMd),
           Row(
             children: [
               Expanded(
                 child: _SourceButton(
                   icon: Icons.camera_alt_rounded,
                   label: AppConstants.scanFromCamera,
-                  color: AppTheme.primaryGreen,
+                  color: AppTheme.accentBlue,
                   onTap: _pickFromCamera,
                 ),
               ),
@@ -499,7 +552,7 @@ class _ScanScreenState extends State<ScanScreen>
                 child: _SourceButton(
                   icon: Icons.photo_library_rounded,
                   label: AppConstants.scanFromGallery,
-                  color: AppTheme.accentBlue,
+                  color: AppTheme.accentPurple,
                   onTap: _pickFromGallery,
                 ),
               ),

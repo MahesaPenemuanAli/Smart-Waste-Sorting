@@ -19,6 +19,9 @@ dependencies:
   # Image input — kamera & galeri
   image_picker: ^1.1.2
 
+  # Live camera preview
+  camera: ^0.11.0+2
+
   # State management
   provider: ^6.1.2
 

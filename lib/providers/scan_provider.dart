@@ -188,6 +188,13 @@ class ScanProvider extends ChangeNotifier {
     }
   }
 
+  /// Scan dari file langsung (digunakan oleh Live Scan / Crop).
+  Future<void> scanFromFile(File imageFile) async {
+    _selectedImage = imageFile;
+    notifyListeners();
+    await _performScan(imageFile);
+  }
+
   /// Internal — proses scan gambar.
   Future<void> _performScan(File imageFile) async {
     try {

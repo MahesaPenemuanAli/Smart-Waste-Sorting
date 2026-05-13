@@ -8,6 +8,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'app.dart';
+import 'providers/auth_provider.dart';
 import 'providers/scan_provider.dart';
 
 void main() async {
@@ -38,6 +39,7 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ScanProvider()),
       ],
       child: const SmartWasteApp(),

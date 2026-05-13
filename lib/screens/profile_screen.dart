@@ -7,7 +7,9 @@ import 'package:provider/provider.dart';
 
 import '../config/constants.dart';
 import '../config/theme.dart';
+import '../providers/auth_provider.dart';
 import '../providers/scan_provider.dart';
+import 'login_screen.dart';
 
 /// Profile screen — info pengguna, pengaturan, tentang app.
 class ProfileScreen extends StatelessWidget {
@@ -70,6 +72,14 @@ class ProfileScreen extends StatelessWidget {
                 color: AppTheme.accentBlue,
                 onTap: () => _showAbout(context),
               ),
+              _buildMenuItem(
+                context,
+                icon: Icons.logout_rounded,
+                title: 'Keluar',
+                subtitle: 'Logout dari akun Anda',
+                color: AppTheme.error,
+                onTap: () => _confirmLogout(context),
+              ),
               const SizedBox(height: AppTheme.spacingLg),
 
               // App info
@@ -128,11 +138,16 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppTheme.spacingMd),
-                Text(
-                  'Eco Warrior',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                Consumer<AuthProvider>(
+                  builder: (context, auth, _) {
+                    final name = auth.currentUser?.name ?? 'Eco Warrior';
+                    return Text(
+                      name,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -481,5 +496,37 @@ class ProfileScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Confirm logout
+  Future<void> _confirmLogout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Keluar?'),
+        content: const Text('Anda akan keluar dari akun ini.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.error),
+            child: const Text('Keluar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      if (!context.mounted) return;
+      await context.read<AuthProvider>().logout();
+      if (!context.mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    }
   }
 }

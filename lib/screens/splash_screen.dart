@@ -5,10 +5,13 @@ library;
 
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/constants.dart';
 import '../config/theme.dart';
+import '../providers/auth_provider.dart';
+import 'login_screen.dart';
 import 'onboarding_screen.dart';
 import 'home_screen.dart';
 
@@ -76,16 +79,26 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(seconds: 3));
     if (!mounted) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    final onboardingComplete =
-        prefs.getBool(AppConstants.prefOnboardingComplete) ?? false;
-
+    // Cek auth status
+    final auth = context.read<AuthProvider>();
+    await auth.checkAuthStatus();
     if (!mounted) return;
 
+    Widget destination;
+    if (auth.isLoggedIn) {
+      // User sudah login → cek onboarding
+      final prefs = await SharedPreferences.getInstance();
+      final onboardingComplete = prefs.getBool(AppConstants.prefOnboardingComplete) ?? false;
+      destination = onboardingComplete ? const HomeScreen() : const OnboardingScreen();
+    } else {
+      // User belum login → login screen
+      destination = const LoginScreen();
+    }
+
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            onboardingComplete ? const HomeScreen() : const OnboardingScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) => destination,
         transitionDuration: const Duration(milliseconds: 800),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
@@ -135,13 +148,13 @@ class _SplashScreenState extends State<SplashScreen>
                         height: 120,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: AppTheme.primaryGradient,
                           boxShadow: AppTheme.glowShadow,
                         ),
-                        child: const Icon(
-                          Icons.recycling,
-                          size: 60,
-                          color: AppTheme.scaffoldDark,
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/icon/app_icon.png',
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                     ),

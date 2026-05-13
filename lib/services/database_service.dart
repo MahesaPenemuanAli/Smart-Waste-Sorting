@@ -10,6 +10,7 @@ import 'package:sqflite/sqflite.dart';
 import '../config/constants.dart';
 import '../models/category.dart';
 import '../models/scan_result.dart';
+import '../models/user.dart';
 
 /// Service database lokal menggunakan SQLite.
 /// Mengelola tabel `categories` dan `scan_results`.
@@ -25,7 +26,7 @@ class DatabaseService {
   static const String _dbName = 'smart_waste_sorting.db';
 
   /// Versi database — increment saat ada perubahan schema.
-  static const int _dbVersion = 1;
+  static const int _dbVersion = 2;
 
   /// Mendapatkan instance database. Buat jika belum ada.
   Future<Database> get database async {
@@ -97,17 +98,37 @@ class DatabaseService {
       ON scan_results(created_at DESC)
     ''');
 
+    // ── Tabel users ──
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS users (
+        id             INTEGER PRIMARY KEY AUTOINCREMENT,
+        name           TEXT    NOT NULL,
+        email          TEXT    NOT NULL UNIQUE,
+        password_hash  TEXT    NOT NULL,
+        avatar_url     TEXT,
+        created_at     TEXT    NOT NULL DEFAULT (datetime('now'))
+      )
+    ''');
+
     // ── Seed data kategori ──
     await _seedCategories(db);
   }
 
   /// Migrasi database saat versi berubah.
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Implementasi migrasi di sini jika schema berubah di masa depan.
-    // Contoh:
-    // if (oldVersion < 2) {
-    //   await db.execute('ALTER TABLE scan_results ADD COLUMN new_field TEXT');
-    // }
+    if (oldVersion < 2) {
+      // v2: tambah tabel users
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+          id             INTEGER PRIMARY KEY AUTOINCREMENT,
+          name           TEXT    NOT NULL,
+          email          TEXT    NOT NULL UNIQUE,
+          password_hash  TEXT    NOT NULL,
+          avatar_url     TEXT,
+          created_at     TEXT    NOT NULL DEFAULT (datetime('now'))
+        )
+      ''');
+    }
   }
 
   /// Insert seed data 3 kategori sampah.
@@ -403,6 +424,38 @@ class DatabaseService {
     final avg = result.first['avg_conf'];
     if (avg == null) return 0.0;
     return (avg as num).toDouble();
+  }
+
+  // ═══════════════════════════════════════════════
+  // CRUD — Users
+  // ═══════════════════════════════════════════════
+
+  /// Insert user baru. Return ID.
+  Future<int> insertUser(AppUser user) async {
+    final db = await database;
+    return db.insert('users', user.toMap());
+  }
+
+  /// Ambil user berdasarkan email.
+  Future<AppUser?> getUserByEmail(String email) async {
+    final db = await database;
+    final maps = await db.query('users', where: 'email = ?', whereArgs: [email], limit: 1);
+    if (maps.isEmpty) return null;
+    return AppUser.fromMap(maps.first);
+  }
+
+  /// Ambil user berdasarkan ID.
+  Future<AppUser?> getUserById(int id) async {
+    final db = await database;
+    final maps = await db.query('users', where: 'id = ?', whereArgs: [id], limit: 1);
+    if (maps.isEmpty) return null;
+    return AppUser.fromMap(maps.first);
+  }
+
+  /// Update user.
+  Future<int> updateUser(AppUser user) async {
+    final db = await database;
+    return db.update('users', user.toMap(), where: 'id = ?', whereArgs: [user.id]);
   }
 
   // ═══════════════════════════════════════════════

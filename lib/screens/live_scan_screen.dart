@@ -166,27 +166,39 @@ class _LiveScanScreenState extends State<LiveScanScreen>
         // 1. Crop this box
         final cropped = await _cropRect(_boxes[i]);
 
-        // 2. Classify (no DB save yet)
-        final classifyResult = await provider.classifyImageOnly(cropped);
-        if (classifyResult == null) continue;
+        // 2. Classify with retry (max 2 retries)
+        Map<String, dynamic>? classifyResult;
+        for (int retry = 0; retry < 3; retry++) {
+          classifyResult = await provider.classifyImageOnly(cropped);
+          if (classifyResult != null) break;
+          // Wait before retry
+          await Future.delayed(const Duration(seconds: 1));
+        }
 
-        final parsedData = classifyResult['parsedData'] as Map<String, dynamic>;
-        final rawResponse = classifyResult['rawResponse'] as String? ?? '';
+        if (classifyResult != null) {
+          final parsedData = classifyResult['parsedData'] as Map<String, dynamic>;
+          final rawResponse = classifyResult['rawResponse'] as String? ?? '';
 
-        // 3. Save to DB
-        await provider.saveLiveClassification(
-          parsedData: parsedData,
-          rawResponse: rawResponse,
-          imageFile: cropped,
-        );
+          // 3. Save to DB
+          await provider.saveLiveClassification(
+            parsedData: parsedData,
+            rawResponse: rawResponse,
+            imageFile: cropped,
+          );
 
-        // 4. Add to results list
-        results.add(BoxResult(
-          boxIndex: i,
-          parsedData: parsedData,
-          croppedImage: cropped,
-          saved: true,
-        ));
+          // 4. Add to results list
+          results.add(BoxResult(
+            boxIndex: i,
+            parsedData: parsedData,
+            croppedImage: cropped,
+            saved: true,
+          ));
+        }
+
+        // 5. Delay between boxes to avoid rate limiting
+        if (i < _boxes.length - 1) {
+          await Future.delayed(const Duration(milliseconds: 800));
+        }
       }
 
       if (!mounted) return;

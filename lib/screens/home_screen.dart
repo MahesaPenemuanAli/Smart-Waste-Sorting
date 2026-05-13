@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../config/constants.dart';
 import '../config/theme.dart';
+import '../providers/auth_provider.dart';
 import '../providers/scan_provider.dart';
 import 'scan_screen.dart';
 import 'history_screen.dart';
@@ -44,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: IndexedStack(
         index: _currentNavIndex,
         children: [
-          _HomeContent(onScanTap: _navigateToScan),
+          _HomeContent(onScanTap: _navigateToScan, onProfileTap: () => setState(() => _currentNavIndex = 3)),
           const HistoryScreen(),
           const StatisticsScreen(),
           const ProfileScreen(),
@@ -171,7 +172,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _HomeContent extends StatelessWidget {
   final VoidCallback onScanTap;
-  const _HomeContent({required this.onScanTap});
+  final VoidCallback onProfileTap;
+  const _HomeContent({required this.onScanTap, required this.onProfileTap});
 
   @override
   Widget build(BuildContext context) {
@@ -212,6 +214,9 @@ class _HomeContent extends StatelessWidget {
 
   /// Header — greeting + avatar
   Widget _buildHeader(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final userName = auth.currentUser?.name ?? 'Eco Warrior';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
       child: Row(
@@ -221,7 +226,7 @@ class _HomeContent extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                AppConstants.homeGreeting,
+                'Halo, $userName! 👋',
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
               const SizedBox(height: 2),
@@ -231,17 +236,25 @@ class _HomeContent extends StatelessWidget {
               ),
             ],
           ),
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: AppTheme.primaryGradient,
-            ),
-            child: const Icon(
-              Icons.person_rounded,
-              color: AppTheme.scaffoldDark,
-              size: 24,
+          GestureDetector(
+            onTap: onProfileTap,
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: AppTheme.primaryGradient,
+              ),
+              child: Center(
+                child: Text(
+                  userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                  style: const TextStyle(
+                    color: AppTheme.scaffoldDark,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             ),
           ),
         ],

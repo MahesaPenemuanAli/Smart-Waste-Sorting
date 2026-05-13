@@ -48,6 +48,9 @@ dependencies:
   # Shared preferences — onboarding check
   shared_preferences: ^2.3.4
 
+  # Security — password hashing
+  crypto: ^3.0.6
+
   # Environment variables — API key security
   flutter_dotenv: ^5.2.1
 
@@ -55,6 +58,14 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#0D1117"
+  adaptive_icon_foreground: "assets/icon/app_icon.png"
 
 flutter:
   uses-material-design: true
@@ -63,3 +74,4 @@ flutter:
     - .env
     - assets/lottie/
     - assets/images/
+    - assets/icon/

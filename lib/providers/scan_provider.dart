@@ -203,7 +203,8 @@ class ScanProvider extends ChangeNotifier {
         'parsedData': result.parsedData,
         'rawResponse': result.rawResponse,
       };
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Error in classifyImageOnly: $e');
       return null;
     }
   }
@@ -230,7 +231,8 @@ class ScanProvider extends ChangeNotifier {
       await refreshStats();
       await loadHistory();
       return true;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Error in saveLiveClassification: $e');
       return false;
     }
   }

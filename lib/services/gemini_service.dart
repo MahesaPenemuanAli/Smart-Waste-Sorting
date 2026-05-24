@@ -41,10 +41,8 @@ class GeminiService {
       apiKey: key,
       generationConfig: GenerationConfig(
         temperature: 0.4, // Rendah untuk konsistensi klasifikasi
-        topP: 0.95,
-        topK: 40,
         maxOutputTokens: 2048,
-        responseMimeType: 'text/plain',
+        responseMimeType: 'application/json', // Memaksa output JSON murni
       ),
       systemInstruction: Content.system(AppConstants.geminiSystemInstruction),
     );
@@ -92,7 +90,8 @@ class GeminiService {
         );
       }
 
-      // Parse JSON response
+      // Parse JSON response — dengan responseMimeType: application/json,
+      // output dijamin JSON murni tanpa markdown wrapper.
       final parsed = _parseJsonResponse(rawText);
 
       return GeminiClassificationResult(
@@ -115,23 +114,9 @@ class GeminiService {
   }
 
   /// Parse response teks dari Gemini menjadi Map JSON.
-  /// Menangani kasus dimana response mungkin terbungkus markdown code block.
+  /// Dengan responseMimeType: application/json, output sudah JSON murni.
   Map<String, dynamic> _parseJsonResponse(String rawText) {
-    String cleaned = rawText.trim();
-
-    // Hapus markdown code block jika ada (```json ... ``` atau ``` ... ```)
-    if (cleaned.startsWith('```')) {
-      // Hapus baris pertama (```json atau ```)
-      final firstNewline = cleaned.indexOf('\n');
-      if (firstNewline != -1) {
-        cleaned = cleaned.substring(firstNewline + 1);
-      }
-      // Hapus ``` terakhir
-      if (cleaned.endsWith('```')) {
-        cleaned = cleaned.substring(0, cleaned.length - 3);
-      }
-      cleaned = cleaned.trim();
-    }
+    final cleaned = rawText.trim();
 
     try {
       final decoded = jsonDecode(cleaned);
@@ -151,22 +136,14 @@ class GeminiService {
   /// Tentukan MIME type dari path file gambar.
   String _getMimeType(String filePath) {
     final ext = filePath.split('.').last.toLowerCase();
-    switch (ext) {
-      case 'jpg':
-      case 'jpeg':
-        return 'image/jpeg';
-      case 'png':
-        return 'image/png';
-      case 'gif':
-        return 'image/gif';
-      case 'webp':
-        return 'image/webp';
-      case 'heic':
-      case 'heif':
-        return 'image/heic';
-      default:
-        return 'image/jpeg'; // Default
-    }
+    return switch (ext) {
+      'jpg' || 'jpeg' => 'image/jpeg',
+      'png' => 'image/png',
+      'gif' => 'image/gif',
+      'webp' => 'image/webp',
+      'heic' || 'heif' => 'image/heic',
+      _ => 'image/jpeg', // Default fallback
+    };
   }
 
   /// Reset model — untuk reinisialisasi dengan key baru.

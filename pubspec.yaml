@@ -13,8 +13,8 @@ dependencies:
   # Icons
   cupertino_icons: ^1.0.8
 
-  # AI — Gemini SDK
-  google_generative_ai: ^0.4.6
+  # AI — Gemini SDK (deprecated: migrasi ke firebase_ai di masa depan)
+  google_generative_ai: ^0.4.7
 
   # Image input — kamera & galeri
   image_picker: ^1.1.2

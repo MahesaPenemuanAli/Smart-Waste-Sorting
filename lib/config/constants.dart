@@ -15,8 +15,8 @@ class AppConstants {
   /// API Key Google Gemini — Dimuat dari file .env
   static String get geminiApiKey => dotenv.env['GEMINI_API_KEY'] ?? 'YOUR_API_KEY_HERE';
 
-  /// Model Gemini yang digunakan — Dimuat dari file .env (fallback: gemini-1.5-flash)
-  static String get geminiModel => dotenv.env['GEMINI_MODEL'] ?? 'gemini-2.5-flash';
+  /// Model Gemini yang digunakan — Dimuat dari file .env (fallback: gemini-3.5-flash)
+  static String get geminiModel => dotenv.env['GEMINI_MODEL'] ?? 'gemini-3.5-flash';
 
   // ─────────────────────────────────────────────
   // System Instruction — Prompt untuk Gemini AI
